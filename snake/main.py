@@ -29,7 +29,7 @@ DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
-font = pygame.font.Font("freesansbold.ttf", 30)
+font = pygame.font.Font("freesansbold.ttf", 20)
 
 # ========== Game Classes ==========
 
@@ -57,12 +57,12 @@ class Snake(object):
             ((current[0] + (x * GRID_SIZE)) % WIDTH),
             (current[1] + (y * GRID_SIZE)) % HEIGHT,
         )
-        if len(self.position) > 2 and new in self.position[2:]:
-            self.reset()
-        else:
-            self.position.insert(0, new)
-            if len(self.position) > self.length:
-                self.position.pop()
+        self.position.insert(0, new)
+        if len(self.position) > self.length:
+            self.position.pop()
+
+        # Return True if there was a collision
+        return len(self.position) > 2 and new in self.position[2:]
 
     def reset(self):
         self.length = 1
@@ -89,6 +89,11 @@ class Snake(object):
                     self.turn(LEFT)
                 elif event.key == pygame.K_RIGHT:
                     self.turn(RIGHT)
+                elif event.key == pygame.K_r:
+                    return "restart"
+                elif event.key == pygame.K_q:
+                    return "quit"
+        return None
 
 
 class Food(object):
@@ -143,24 +148,56 @@ def main():
     # Create Game Objects
     snake = Snake()
     food = Food()
-
+    game_over = False
     score = 0
 
     # Game Loop
     while True:
         clock.tick(10)
-        snake.handle_keys()
+        key_response = snake.handle_keys()
+
+        # Restart Logic
+        if game_over and key_response == "restart":
+            snake = Snake()
+            food = Food()
+            score = 0
+            game_over = False
+
+        # Quit Logic
+        if game_over and key_response == "quit":
+            pygame.quit()
+            sys.exit()
+
         draw_grid(surface)
-        snake.move()
-        if snake.get_head_position() == food.position:
-            snake.length += 1
-            score += 1
-            food.random_pos()
+
+        if not game_over:
+            collision = snake.move()
+            if collision:
+                game_over = True
+
+            head = snake.get_head_position()
+            if head in snake.position[1:]:
+                game_over = True
+
+            if head == food.position:
+                snake.length += 1
+                score += 1
+                food.random_pos()
+
+        # Draw items on surface
         snake.draw(surface)
         food.draw(surface)
         screen.blit(surface, (0, 0))
         text = font.render("Score {0}".format(score), True, black)
         screen.blit(text, (5, 10))
+
+        # Game over logic
+        if game_over:
+            game_over_text = font.render(
+                "Game Over! Press R to Restart or Q to Quit", True, black
+            )
+            screen.blit(game_over_text, (WIDTH // 2 - 225, HEIGHT // 2))
+
         pygame.display.update()
 
 
