@@ -20,6 +20,8 @@ pygame.font.init()
 
 font = pygame.font.Font("freesansbold.ttf", 20)
 
+# ========== High Score Logic ==========
+
 
 def load_high_score():
     if os.path.exists(HIGH_SCORE_FILE):
@@ -32,6 +34,9 @@ def load_high_score():
 def save_high_score(score):
     with open(HIGH_SCORE_FILE, "w") as f:
         json.dump({"high_score": score}, f)
+
+
+# ========== Main Game Logic ==========
 
 
 def main():
@@ -72,6 +77,8 @@ def main():
 
     # Game loop
     while True:
+        screen.fill(black)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
@@ -88,8 +95,6 @@ def main():
                         a.split()
                         score += 5
 
-        screen.fill(black)
-
         for d in drawable:
             d.draw(screen)
 
@@ -105,7 +110,6 @@ def main():
         if game_over:
             if score > high_score:
                 high_score = score
-                save_high_score(high_score)
             game_over_text = font.render(
                 "Game Over! Press R to Restart or Q to Quit", True, "white"
             )
